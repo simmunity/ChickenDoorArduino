@@ -1,1 +1,4 @@
 # ChickenDoorArduino
+
+Beta version developed on original DIP Arduino Uno using Seeed Studio Grove Shield and Grove light sensor, two Grove relays, a Grove LED (which can be replaced with a Grove relay to enable a coop heater when the coop door is closed), a mini 2 axis joystick with push to select switch (custom wired to Grove connectors) and a Sunfounder 4x20 display with I2C daughter board connected using a modified Grove cable. Lastly a DS3231M I2C RTC module is connected with a customized Grove cable.
+The joystick can select MANUAL override mode forcing the door up by pushing it right, or disable MANUAL mode by pushing it left. By pushing the joysticks select switch, the display changes to setup mode allowing the time, date and morning and evening hours (that force the door closed regardless of light value), can be set.
