@@ -1,5 +1,5 @@
 // Chicken Door light meter and timer
-// Shannon Bailey Nov 10 2019
+// Shannon Bailey Nov 17 7:20PM 2019
 // Includes DS3231M RTC code with control through joystick with select on depress
 
 #include <DS3231M.h>
@@ -23,6 +23,10 @@
 #define CHANGE_DELAY 10
 #define LIGHT_SAMPLES 20
 #define SPRINTF_BUFFER_SIZE 32
+#define JOY_MAX 950
+#define JOY_MIN 50
+#define EEPROM_MORNING 1022
+#define EEPROM_NIGHT 1023
 
 int8_t  nightHour;
 int8_t  morningHour;
@@ -68,7 +72,7 @@ void setup() {
     B11111
   };
   delay( 100 );
-  lcd.createChar(0, box);
+  lcd.createChar( 0, box );
 
   delay( 3000 );
   
@@ -88,8 +92,8 @@ void setup() {
   pinMode( RELAY_OPEN_PIN, OUTPUT );
   pinMode( RELAY_CLOSE_PIN, OUTPUT );
 
-  morningHour  = EEPROM.read(1022);
-  nightHour    = EEPROM.read(1023);
+  morningHour  = EEPROM.read( EEPROM_MORNING );
+  nightHour    = EEPROM.read( EEPROM_NIGHT );
   powerState   = POWER_OFF;
   openClose    = OPEN;
   manual       = false;
@@ -103,15 +107,15 @@ void setup() {
 
 int16_t adjust( int16_t value, uint8_t cursor, int8_t direction ) {
   value += direction;
-  if ( value > (int16_t)pgm_read_word(&set_upper_limit[ cursor ]) ) {
-    value = pgm_read_word(&set_lower_limit[ cursor ]);
-  } else if ( value < (int16_t)pgm_read_word(&set_lower_limit[ cursor ]) ) {
-    value = pgm_read_word(&set_upper_limit[ cursor ]);
+  if ( value > (int16_t)pgm_read_word( &set_upper_limit[ cursor ] ) ) {
+    value = pgm_read_word( &set_lower_limit[ cursor ] );
+  } else if ( value < (int16_t)pgm_read_word( &set_lower_limit[ cursor ] ) ) {
+    value = pgm_read_word( &set_upper_limit[ cursor ] );
   }
   return value;
 }
 
-void settings() {    
+void settings() {
   lcd.clear();
   lcd.setCursor( 0, 0 );    // go to the 1st row, left edge
   lcd.print( F("Set Time and Date   ") );
@@ -129,16 +133,12 @@ void settings() {
   int8_t direction;
   
   do {
-    row = pgm_read_byte(&set_row[cursor]);
-    col = pgm_read_byte(&set_col[cursor]);
-    len = pgm_read_byte(&set_len[cursor]);
+    row = pgm_read_byte( &set_row[cursor] );
+    col = pgm_read_byte( &set_col[cursor] );
+    len = pgm_read_byte( &set_len[cursor] );
     lcd.setCursor( col, row );
-    lcd.write(byte(0));
-    lcd.write(byte(0));
-    if (len == 4) {
-      lcd.write(byte(0));
-      lcd.write(byte(0));
-    }
+    for ( ; len > 0; len-- )
+      lcd.write( byte(0));
     
     delay( 500 );
 
@@ -167,9 +167,9 @@ void settings() {
 
     up_down = analogRead( ANALOG_UD );
     direction = 0;
-    if ( up_down > 950 ) {
+    if ( up_down > JOY_MAX ) {
       direction = 1;
-    } else if ( up_down < 50 ) {
+    } else if ( up_down < JOY_MIN ) {
       direction = -1;
     }
 
@@ -208,9 +208,9 @@ void settings() {
     }
 
     left_right = analogRead( ANALOG_LR );
-    if ( left_right > 950 ) {
+    if ( left_right > JOY_MAX ) {
       cursor++;
-    } else if ( left_right < 50 && cursor > 0 ) {
+    } else if ( left_right < JOY_MIN && cursor > 0 ) {
       cursor--;
     }
     
@@ -218,10 +218,10 @@ void settings() {
     
   } while ( cursor < 8 );
 
-  if ( morningHour != EEPROM.read(1022) )
-    EEPROM.write( 1022, morningHour );
-  if ( nightHour != EEPROM.read(1023) )
-    EEPROM.write( 1023, nightHour);
+  if ( morningHour != EEPROM.read( EEPROM_MORNING ) )
+    EEPROM.write( EEPROM_MORNING, morningHour );
+  if ( nightHour != EEPROM.read( EEPROM_NIGHT ) )
+    EEPROM.write( EEPROM_NIGHT, nightHour);
     
   lcd.clear();
   selected = false;
@@ -258,7 +258,7 @@ void loop() {
   DateTime now = DS3231M.now();
 
   night = (now.hour() >= nightHour || now.hour() <= morningHour);
-//  night = !night; // STB enbale for testing
+//  night = !night; // STB enable for testing
   
   sprintf( outputBuffer, "%02d:%02d:%02d %04d-%02d-%02d", now.hour(),
     now.minute(), now.second(), now.year(), now.month(), now.day() );
@@ -297,9 +297,9 @@ void loop() {
   }
   
   left_right = analogRead( ANALOG_LR );
-  if ( left_right > 950 ) {
+  if ( left_right > JOY_MAX ) {
     manual = true;
-  } else if ( left_right < 50 ) {
+  } else if ( left_right < JOY_MIN ) {
     manual = false;
   }
 
