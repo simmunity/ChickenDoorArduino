@@ -1,4 +1,4 @@
-# ChickenDoorArduino
+# Chicken Coop Automatic Door Controller
 
 Beta version developed on original DIP Arduino Uno using Seeed Studio Grove Shield and Grove light sensor, two Grove relays, a Grove LED (which can be replaced with a Grove relay to enable a coop heater when the coop door is closed), a mini 2 axis joystick with push to select switch (custom wired to Grove connectors) and a Sunfounder 4x20 display with I2C daughter board connected using a customized Grove cable. Lastly a DS3231M I2C RTC module is connected with a soldered on Grove connector and standard Grove cable.
 
