@@ -112,8 +112,6 @@ int16_t adjust( int16_t value, uint8_t cursor, int8_t direction ) {
 }
 
 void settings() {    
-  digitalWrite( INDICATOR_PIN, HIGH );
-    
   lcd.clear();
   lcd.setCursor( 0, 0 );    // go to the 1st row, left edge
   lcd.print( F("Set Time and Date   ") );
