@@ -9,3 +9,7 @@ I have a Bud 4x6x4 case with clear lid and internal panel that the whole kit wit
 ![alt text](https://github.com/simmunity/ChickenDoorArduino/blob/master/ChickenDoorDisplay.jpg "This is the display when not in setup")
 
 ![alt text](https://github.com/simmunity/ChickenDoorArduino/blob/master/ChickenDoorHardware.jpg "Here is the hardware")
+
+![alt text](https://github.com/simmunity/ChickenDoorArduino/blob/master/ChickenPanelBack.jpg "The back of the control panel")
+
+![alt text](https://github.com/simmunity/ChickenDoorArduino/blob/master/ChickenPanelFront.jpg "Front of the control panel")
