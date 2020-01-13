@@ -1,6 +1,8 @@
 // Chicken Door light meter and timer
-// Shannon Bailey Nov 17 7:20PM 2019
+// Shannon Bailey Jan 12 3:20PM 2020
 // Includes DS3231M RTC code with control through joystick with select on depress
+// Extended light samples to 40 and change delay to 30 on 12/1/2019 to avoid rapid cycling
+// Adjusted some timings, manual mode now allows selecting open or close
 
 #include <DS3231M.h>
 //#include <Wire.h> 
@@ -11,7 +13,6 @@
 #define ANALOG_LR A1  // L=0, R=1023
 #define ANALOG_UD A2  // D=0, U=1023
 #define SELECT_PIN 4  // Select=0
-#define INDICATOR_PIN 3
 #define RELAY_OPEN_PIN 7
 #define RELAY_CLOSE_PIN 8
 
@@ -20,8 +21,8 @@
 #define OPEN 2
 #define CLOSE 3
 #define DELAY_MS 1000
-#define CHANGE_DELAY 10
-#define LIGHT_SAMPLES 20
+#define CHANGE_DELAY 20
+#define LIGHT_SAMPLES 40
 #define SPRINTF_BUFFER_SIZE 32
 #define JOY_MAX 950
 #define JOY_MIN 50
@@ -60,15 +61,15 @@ void setup() {
   lcd.setCursor( 0, 0 );            // go to the top left corner
   lcd.print( F("Chicken Door Control") );
   lcd.setCursor( 0, 1 );            // go to the 2nd row, left edge
-  lcd.print( F("S Bailey Nov 17 2019") );
+  lcd.print( F("S Bailey Jan 12 2020") );
 
   byte box[8] = {
-    B11111,
-    B10101,
-    B11011,
-    B10101,
-    B11011,
-    B10101,
+    B00000,
+    B00000,
+    B00000,
+    B00000,
+    B00000,
+    B10001,
     B11111
   };
   delay( 100 );
@@ -88,7 +89,6 @@ void setup() {
   now = DS3231M.now();
 
   pinMode( SELECT_PIN, INPUT );
-  pinMode( INDICATOR_PIN, OUTPUT );
   pinMode( RELAY_OPEN_PIN, OUTPUT );
   pinMode( RELAY_CLOSE_PIN, OUTPUT );
 
@@ -140,7 +140,7 @@ void settings() {
     for ( ; len > 0; len-- )
       lcd.write( byte(0));
     
-    delay( 500 );
+    delay( 200 );
 
     DateTime now = DS3231M.now();
 
@@ -234,6 +234,7 @@ void loop() {
   uint8_t  overRide;
   uint8_t  night;
   uint16_t left_right;
+  uint16_t up_down;
 
   if ( selected ) {
     settings();
@@ -306,6 +307,12 @@ void loop() {
   if ( manual ) {
     lcd.setCursor( 0, 3 );
     lcd.print( F("MANUAL") );
+    up_down = analogRead( ANALOG_UD );
+    if ( up_down > JOY_MAX ) {
+      MoveActuator( OPEN );
+    } else if ( up_down < JOY_MIN ) {
+      MoveActuator( CLOSE );
+    }
   }
   
   lcd.setCursor( 10, 3 );
@@ -320,16 +327,10 @@ void loop() {
     if ( powerOnTime > CHANGE_DELAY ) {
       MoveActuator( POWER_OFF );
     }
-  }
-
-  if ( powerState == POWER_OFF ) {
+  } else if ( powerState == POWER_OFF ) {
     powerOffTime++;
     if ( powerOffTime > CHANGE_DELAY ) {
-      if ( manual ) {
-        if (openClose != OPEN) {
-          MoveActuator( OPEN );
-        }
-      } else {
+      if ( manual == false ) {
         if (night) {
           if ( openClose != CLOSE ) {
             MoveActuator( CLOSE );
@@ -356,7 +357,6 @@ void MoveActuator( uint8_t state ) {
       powerState = POWER_OFF;
       break;
     case OPEN:
-      digitalWrite( INDICATOR_PIN, LOW );
       digitalWrite( RELAY_OPEN_PIN, HIGH );
       digitalWrite( RELAY_CLOSE_PIN, LOW );
       openClose  = OPEN;
@@ -364,7 +364,6 @@ void MoveActuator( uint8_t state ) {
       break;
     case CLOSE:
     default:
-      digitalWrite( INDICATOR_PIN, HIGH );
       digitalWrite( RELAY_OPEN_PIN, LOW );
       digitalWrite( RELAY_CLOSE_PIN, HIGH );
       openClose  = CLOSE;
