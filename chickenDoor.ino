@@ -333,10 +333,10 @@ void loop() {
             MoveActuator( CLOSE );
           }
         } else {
-          if ( openClose != OPEN && (lightAverage > 100) ) {
+          if ( openClose != OPEN && (lightAverage > 80) ) {
             MoveActuator(OPEN);
           } else {
-            if ( openClose != CLOSE && (lightAverage <= 100) ) {
+            if ( openClose != CLOSE && (lightAverage <= 40) ) {
               MoveActuator(CLOSE);
             }
           }
