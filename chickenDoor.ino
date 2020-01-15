@@ -1,5 +1,5 @@
 // Chicken Door light meter and timer
-// Shannon Bailey Jan 12 3:20PM 2020
+// Shannon Bailey Jan 14 9:20PM 2020
 // Includes DS3231M RTC code with control through joystick with select on depress
 // Extended light samples to 40 and change delay to 30 on 12/1/2019 to avoid rapid cycling
 // Adjusted some timings, manual mode now allows selecting open or close
@@ -61,7 +61,7 @@ void setup() {
   lcd.setCursor( 0, 0 );            // go to the top left corner
   lcd.print( F("Chicken Door Control") );
   lcd.setCursor( 0, 1 );            // go to the 2nd row, left edge
-  lcd.print( F("S Bailey Jan 12 2020") );
+  lcd.print( F("S Bailey Jan 14 2020") );
 
   byte box[8] = {
     B00000,
@@ -236,6 +236,7 @@ void loop() {
   uint16_t left_right;
   uint16_t up_down;
 
+  selected = !digitalRead( SELECT_PIN );
   if ( selected ) {
     settings();
   }
@@ -254,12 +255,9 @@ void loop() {
   lightAverage = lightAverage / LIGHT_SAMPLES;
   lightAverage = lightAverage < 1000 ? lightAverage : 999;
 
-  selected = !digitalRead( SELECT_PIN );
-
   DateTime now = DS3231M.now();
 
-  night = (now.hour() >= nightHour || now.hour() <= morningHour);
-//  night = !night; // STB enable for testing
+  night = (now.hour() >= nightHour || now.hour() < morningHour);
   
   sprintf( outputBuffer, "%02d:%02d:%02d %04d-%02d-%02d", now.hour(),
     now.minute(), now.second(), now.year(), now.month(), now.day() );
@@ -290,13 +288,6 @@ void loop() {
   lcd.setCursor( 15, 2 );
   lcd.print( outputBuffer );
   
-  lcd.setCursor( 0, 3 );
-  if ( night ) {
-    lcd.print( F("NIGHT ") ); 
-  } else {
-    lcd.print( F("DAY   ") );
-  }
-  
   left_right = analogRead( ANALOG_LR );
   if ( left_right > JOY_MAX ) {
     manual = true;
@@ -304,8 +295,8 @@ void loop() {
     manual = false;
   }
 
+  lcd.setCursor( 0, 3 );
   if ( manual ) {
-    lcd.setCursor( 0, 3 );
     lcd.print( F("MANUAL") );
     up_down = analogRead( ANALOG_UD );
     if ( up_down > JOY_MAX ) {
@@ -313,13 +304,19 @@ void loop() {
     } else if ( up_down < JOY_MIN ) {
       MoveActuator( CLOSE );
     }
+  } else {
+    if ( night ) {
+      lcd.print( F("NIGHT ") ); 
+    } else {
+      lcd.print( F("DAY   ") );
+    }
   }
   
   lcd.setCursor( 10, 3 );
   if ( openClose == OPEN ) {
     lcd.print( F("DOOR OPEN ") );
   } else {
-     lcd.print( F("DOOR CLOSE") );
+    lcd.print( F("DOOR CLOSE") );
   }
   
   if ( powerState == POWER_ON ) {
@@ -331,7 +328,7 @@ void loop() {
     powerOffTime++;
     if ( powerOffTime > CHANGE_DELAY ) {
       if ( manual == false ) {
-        if (night) {
+        if ( night ) {
           if ( openClose != CLOSE ) {
             MoveActuator( CLOSE );
           }
